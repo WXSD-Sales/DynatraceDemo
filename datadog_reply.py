@@ -1,0 +1,144 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+import json
+import os
+import traceback
+
+import tornado.gen
+import tornado.httpserver
+import tornado.ioloop
+import tornado.web
+
+from common.spark import Spark
+
+from datadog.settings import Settings
+
+from tornado.options import define, options, parse_command_line
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
+
+define("debug", default=False, help="run in debug mode")
+
+class MainHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def post(self):
+        try:
+            secret_equal = Spark.compare_secret(self.request.body, self.request.headers.get('X-Spark-Signature'), Settings.secret_phrase)
+            if secret_equal or Settings.secret_phrase.lower()=="none":
+                webhook = json.loads(self.request.body)
+                if webhook['data']['personId'] != Settings.bot_id:
+                    print("MainHandler Webhook Received:")
+                    print(webhook)
+                    response = yield self.application.settings['spark'].get_with_retries_v2('https://api.ciscospark.com/v1/messages/{0}'.format(webhook['data']['id']))
+                    print("response.BODY:{0}".format(response.body))
+                    reply_msg = 'You said, "{0}".'.format(response.body.get('text'))
+                    if reply_msg != '':
+                        yield self.application.settings['spark'].post_with_retries('https://api.ciscospark.com/v1/messages', {'markdown':reply_msg, 'roomId':webhook['data']['roomId']})
+            else:
+                print("CardsHandler Secret does not match")
+        except Exception as e:
+            print("CardsHandler General Error:{0}".format(e))
+            traceback.print_exc()
+
+class CardsHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def post(self):
+        try:
+            secret_equal = Spark.compare_secret(self.request.body, self.request.headers.get('X-Spark-Signature'), Settings.secret_phrase)
+            if secret_equal or Settings.secret_phrase.lower()=="none":
+                webhook = json.loads(self.request.body)
+                print("CardsHandler Webhook Attachment Action Received:")
+                print(webhook)
+                attachment = yield self.application.settings['spark'].get_with_retries_v2('https://api.ciscospark.com/v1/attachment/actions/{0}'.format(webhook['data']['id']))
+                print("attachment.BODY:{0}".format(attachment.body))
+                message_id = attachment.body['messageId']
+                room_id = attachment.body['roomId']
+                person_id = attachment.body['personId']
+                inputs = attachment.body.get('inputs', {})
+                print("messageId:{0}".format(message_id))
+                print("roomId:{0}".format(room_id))
+                print("inputs:{0}".format(inputs))
+                room = yield self.application.settings['spark'].get_with_retries_v2('https://api.ciscospark.com/v1/rooms/{0}'.format(room_id))
+                room_type = room.body.get('type')
+                person = "you"
+                if room_type == "group":
+                    person = "<@personId:{0}|>".format(person_id)
+                reply_msg = ''
+                if inputs.get('submit') == "ack" and inputs.get('id') not in [None, ""]:
+                    yield self.application.settings['spark'].delete('https://api.ciscospark.com/v1/messages/{0}'.format(message_id))
+                    reply_msg = "Event ID: **{0}** has been acknowledged by {1}.".format(inputs.get('id'), person)
+                elif inputs.get('submit') == "inc":
+                    if inputs.get('title') in [None, ""]:
+                        reply_msg = "You must enter a title for a new incident."
+                    else:
+                        resp = yield self.declare_incident(inputs.get('title'), inputs.get('hostname'))
+                        print("incident create resp:{0}".format(resp.body))
+                        jbody = json.loads(resp.body)
+                        inc_id = jbody['data']['attributes']['public_id']
+                        reply_msg = "Incident created by {0}, view it [here](https://app.datadoghq.com/incidents/{1}).".format(person, inc_id)
+                        yield self.application.settings['spark'].delete('https://api.ciscospark.com/v1/messages/{0}'.format(message_id))
+                if reply_msg != '':
+                    yield self.application.settings['spark'].post_with_retries('https://api.ciscospark.com/v1/messages', {'markdown':reply_msg, 'roomId':room_id})
+            else:
+                print("CardsHandler Secret does not match")
+        except Exception as e:
+            print("CardsHandler General Error:{0}".format(e))
+            traceback.print_exc()
+
+    @tornado.gen.coroutine
+    def declare_incident(self, reason, hostname):
+        headers={"Content-Type":"application/json",
+                "DD-API-KEY" : Settings.dd_api_key,
+                "DD-APPLICATION-KEY": Settings.dd_application_key}
+        reason += " HOSTNAME:{0}".format(hostname)
+        data = {
+          "data": {
+            "attributes": {
+              "customer_impacted": False,
+              "title": reason
+            },
+            "relationships": {
+              "commander": {
+                "data": {
+                  "id": Settings.dd_creator_id,
+                  "type": "users"
+                }
+              }
+            },
+            "type": "incidents"
+          }
+        }
+        request = HTTPRequest('https://api.datadoghq.com/api/v2/incidents', method="POST", headers=headers, body=json.dumps(data), request_timeout=20)
+        http_client = AsyncHTTPClient()
+        response = yield http_client.fetch(request)
+        raise tornado.gen.Return(response)
+
+
+@tornado.gen.coroutine
+def main():
+    try:
+        parse_command_line()
+        app = tornado.web.Application(
+            [   (r"/", MainHandler),
+                (r"/cards", CardsHandler),
+            ],
+            cookie_secret="CHANGE_THIS_TO_SOME_RANDOM_VALUE",
+            xsrf_cookies=False,
+            debug=options.debug,
+            )
+        app.settings['debug'] = options.debug
+        app.settings['settings'] = Settings
+        app.settings['spark'] = Spark(Settings.token)
+        server = tornado.httpserver.HTTPServer(app)
+        print("Serving... on port {0}".format(Settings.port))
+        server.bind(Settings.port)  # port
+        print("Debug: {0}".format(app.settings["debug"]))
+        server.start()
+        tornado.ioloop.IOLoop.instance().start()
+        print('Done')
+    except Exception as e:
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
