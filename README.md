@@ -21,3 +21,17 @@ To run this, you can simply run:
 ```
 python datadog_reply.py
 ```
+
+Using the bot's token, you can get the bot's personId here:
+https://developer.webex.com/docs/api/v1/people/get-my-own-details
+
+
+You will need to create at least one [webhook](https://developer.webex.com/docs/api/guides/webhooks) to your bot's hosted location + /cards, example:
+https://yoursite.com/cards
+
+
+The DD_API_KEY and DD_APPLICATION_KEY Values need to be setup through Datadog:
+https://docs.datadoghq.com/api/latest/authentication/
+
+
+You can use the Datadog API (https://docs.datadoghq.com/api/latest/users/) to find an appropriate DD_CREATOR_ID value (this will be the user who creates the incident in Datadog).
