@@ -26,12 +26,117 @@ Using the bot's token, you can get the bot's personId here:
 https://developer.webex.com/docs/api/v1/people/get-my-own-details
 
 
-You will need to create at least one [webhook](https://developer.webex.com/docs/api/guides/webhooks) to your bot's hosted location + /cards, example:
-https://yoursite.com/cards
-
-
 The DD_API_KEY and DD_APPLICATION_KEY Values need to be setup through Datadog:
 https://docs.datadoghq.com/api/latest/authentication/
 
 
 You can use the Datadog API (https://docs.datadoghq.com/api/latest/users/) to find an appropriate DD_CREATOR_ID value (this will be the user who creates the incident in Datadog).
+
+
+
+You will need to create at least one Webex [webhook](https://developer.webex.com/docs/api/guides/webhooks) to your bot's hosted location + /cards, example:
+https://yoursite.com/cards
+
+
+In addition, you will need a webhook on the Datadog side (https://app.datadoghq.com/account/settings#integrations/webhooks).  The webhook payload you setup should look like this:
+```
+URL: https://webexapis.com/v1/messages
+```
+You will need to replace the roomId with a valid Webex [Room (space)](https://developer.webex.com/docs/api/v1/rooms)
+```
+{
+  "roomId": "XXXX",
+  "markdown": "DataDog Example Alert",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "content": 
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "TextBlock",
+            "size": "Medium",
+            "weight": "Bolder",
+            "text": "Alert!"
+        },
+        {
+            "type": "FactSet",
+            "facts": [
+                {
+                    "title": "ID",
+                    "value": "$ID"
+                }
+            ]
+        },
+        {
+            "type": "FactSet",
+            "facts": [
+                {
+                    "title": "HOSTNAME",
+                    "value": "$HOSTNAME"
+                }
+            ]
+        },
+        {
+            "type": "TextBlock",
+            "text": "$EVENT_MSG",
+            "wrap": true
+        },
+        {
+            "type": "ActionSet",
+            "actions": [
+                {
+                    "type": "Action.Submit",
+                    "title": "Acknowledge",
+                    "data":{"id":"$ID", "submit":"ack"}
+                },
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "View",
+                    "url":"$LINK"
+                },
+                {
+                    "type": "Action.ShowCard",
+                    "title": "New Incident",
+                    "card":{"type": "AdaptiveCard",
+                            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                            "version": "1.2",
+                            "body": [
+                                    {
+                                        "id":"title",
+                                        "type": "Input.Text",
+                                        "placeholder": "Incident Title",
+                                        "spacing": "default"
+                                    },
+                                    {
+                                        "type": "ActionSet",
+                                        "actions": [
+                                            {
+                                                "type": "Action.Submit",
+                                                "title": "Create Incident",
+                                                "data": {
+                                                    "hostname": "$HOSTNAME",
+                                                    "url": "$LINK",
+                                                    "submit": "inc"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                        }
+                }
+            ]
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.2"
+}
+}
+]
+}
+```
+You will also need to specify Custom Headers, where the Bearer Token value is replaced by the one you get from [creating a bot of your own.](https://developer.webex.com/my-apps)
+```
+{"Content-Type":"application/json", "Authorization":"Bearer XXXX_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"}
+```
