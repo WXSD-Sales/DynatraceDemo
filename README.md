@@ -35,7 +35,13 @@ You can use the Datadog API (https://docs.datadoghq.com/api/latest/users/) to fi
 
 
 You will need to create at least one Webex [webhook](https://developer.webex.com/docs/api/guides/webhooks) to your bot's hosted location + /cards, example:
-https://yoursite.com/cards
+https://yoursite.com/cards - required fields:
+```
+      "name": "Attachment Actions Webhook",
+      "targetUrl": "https://yoursite.com/cards",
+      "resource": "attachmentActions",
+      "event": "created",
+```
 
 
 In addition, you will need a webhook on the Datadog side (https://app.datadoghq.com/account/settings#integrations/webhooks).  The webhook payload you setup should look like this:
