@@ -1,6 +1,7 @@
 # DatadogDemo
 This demo has been tested in Python3 only (v3.7.4)
 
+# 1
 You will need to install the following third party python modules:
 ```
 pip install tornado==4.5.2
@@ -33,7 +34,7 @@ https://docs.datadoghq.com/api/latest/authentication/
 You can use the Datadog API (https://docs.datadoghq.com/api/latest/users/) to find an appropriate DD_CREATOR_ID value (this will be the user who creates the incident in Datadog).
 
 
-
+# 2
 You will need to create at least one Webex [webhook](https://developer.webex.com/docs/api/guides/webhooks) to your bot's hosted location + /cards, example:
 https://yoursite.com/cards - required fields:
 ```
@@ -43,7 +44,7 @@ https://yoursite.com/cards - required fields:
       "event": "created",
 ```
 
-
+# 3
 In addition, you will need a webhook on the Datadog side (https://app.datadoghq.com/account/settings#integrations/webhooks).  The webhook payload you setup should look like this:
 ```
 URL: https://webexapis.com/v1/messages
