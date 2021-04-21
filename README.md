@@ -2,7 +2,7 @@
 This demo has been tested in Python3 only (v3.7.4)
 
 A video walkthrough of this application can be found here:
-https://drive.google.com/file/d/1MZzoXa_ZOkpHL1qDP_ZcIHwU4C-YhSVl/view?usp=sharing
+https://youtu.be/s6VqLXaaACM
 
 # 1
 You will need to install the following third party python modules:
