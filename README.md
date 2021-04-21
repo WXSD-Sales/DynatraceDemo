@@ -1,4 +1,4 @@
-# DatadogDemo
+# DynatraceDemo
 This demo has been tested in Python3 only (v3.7.4)
 
 A video walkthrough of this application can be found here:
