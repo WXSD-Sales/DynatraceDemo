@@ -12,13 +12,11 @@ pip install tornado==4.5.2
 
 The following Environment variables are required for this demo, set with the appropriate values:
 ```
-MY_BOT_ID=1234567890
-MY_BOT_TOKEN=ABCDEFG-1234-567A_ZYX
-MY_SECRET_PHRASE=datadogtestexample
-MY_BOT_PORT=8080
-DD_API_KEY=abcdefghijklmnop
-DD_APPLICATION_KEY=31415826753492031
-DD_CREATOR_ID=abcdefgh-12ab-34cd-56ef-ijklmnopqrstu
+export MY_BOT_ID=Y2lzY123456A
+export MY_BOT_TOKEN=ZGNABCDEFG_1234-56AB-CD34-ZYXW
+export MY_BOT_PORT=8000
+
+export DYNA_TOKEN="dt1c00.VN6ABCD.EFGH1234"
 ```
 
 To run this, you can simply run:
@@ -30,11 +28,9 @@ Using the bot's token, you can get the bot's personId here:
 https://developer.webex.com/docs/api/v1/people/get-my-own-details
 
 
-The DD_API_KEY and DD_APPLICATION_KEY Values need to be setup through Datadog:
-https://docs.datadoghq.com/api/latest/authentication/
+The DYNA_TOKEN value needs to be setup through Dynatrace:
+https://www.dynatrace.com/support/help/dynatrace-api/basics/dynatrace-api-authentication/
 
-
-You can use the Datadog API (https://docs.datadoghq.com/api/latest/users/) to find an appropriate DD_CREATOR_ID value (this will be the user who creates the incident in Datadog).
 
 
 # 2
@@ -48,15 +44,15 @@ https://yoursite.com/cards - required fields:
 ```
 
 # 3
-In addition, you will need a webhook on the Datadog side (https://app.datadoghq.com/account/settings#integrations/webhooks).  The webhook payload you setup should look like this:
+In addition, you will need an Integration on the Dynatrace side (https://uec79139.live.dynatrace.com/#settings/integration/notification;gf=all).  The webhook payload you setup should look like this:
 ```
 URL: https://webexapis.com/v1/messages
 ```
 You will need to replace the roomId with a valid Webex [Room (space)](https://developer.webex.com/docs/api/v1/rooms)
 ```
 {
-  "roomId": "XXXX",
-  "markdown": "DataDog Example Alert",
+  "roomId": "YOUR_ROOM_ID_HERE",
+  "markdown": "Dynatrace Example Alert",
   "attachments": [
     {
       "contentType": "application/vnd.microsoft.card.adaptive",
@@ -68,14 +64,14 @@ You will need to replace the roomId with a valid Webex [Room (space)](https://de
             "type": "TextBlock",
             "size": "Medium",
             "weight": "Bolder",
-            "text": "Alert!"
+            "text": "Alert! {ProblemTitle}"
         },
         {
             "type": "FactSet",
             "facts": [
                 {
                     "title": "ID",
-                    "value": "$ID"
+                    "value": "{PID}"
                 }
             ]
         },
@@ -83,14 +79,14 @@ You will need to replace the roomId with a valid Webex [Room (space)](https://de
             "type": "FactSet",
             "facts": [
                 {
-                    "title": "HOSTNAME",
-                    "value": "$HOSTNAME"
+                    "title": "ImpactedEntity",
+                    "value": "{ImpactedEntity}"
                 }
             ]
         },
         {
             "type": "TextBlock",
-            "text": "$EVENT_MSG",
+            "text": "{ProblemDetailsMarkdown}",
             "wrap": true
         },
         {
@@ -99,24 +95,24 @@ You will need to replace the roomId with a valid Webex [Room (space)](https://de
                 {
                     "type": "Action.Submit",
                     "title": "Acknowledge",
-                    "data":{"id":"$ID", "submit":"ack"}
+                    "data":{"id":"{PID}", "submit":"ack"}
                 },
                 {
                     "type": "Action.OpenUrl",
                     "title": "View",
-                    "url":"$LINK"
+                    "url":"{ProblemURL}"
                 },
                 {
                     "type": "Action.ShowCard",
-                    "title": "New Incident",
+                    "title": "Add Comment",
                     "card":{"type": "AdaptiveCard",
                             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
                             "version": "1.2",
                             "body": [
                                     {
-                                        "id":"title",
+                                        "id":"comment",
                                         "type": "Input.Text",
-                                        "placeholder": "Incident Title",
+                                        "placeholder": "Write your comment here...",
                                         "spacing": "default"
                                     },
                                     {
@@ -124,10 +120,10 @@ You will need to replace the roomId with a valid Webex [Room (space)](https://de
                                         "actions": [
                                             {
                                                 "type": "Action.Submit",
-                                                "title": "Create Incident",
+                                                "title": "Add Comment",
                                                 "data": {
-                                                    "hostname": "$HOSTNAME",
-                                                    "url": "$LINK",
+                                                    "pid": "{PID}",
+                                                    "url": "{ProblemURL}",
                                                     "submit": "inc"
                                                 }
                                             }
@@ -146,7 +142,7 @@ You will need to replace the roomId with a valid Webex [Room (space)](https://de
 ]
 }
 ```
-You will also need to specify Custom Headers, where the Bearer Token value is replaced by the one you get from [creating a bot of your own.](https://developer.webex.com/my-apps)
+You will also need to specify 2 Custom Headers, where the Bearer Token value is replaced by the one you get from [creating a bot of your own.](https://developer.webex.com/my-apps)
 ```
 {"Content-Type":"application/json", "Authorization":"Bearer XXXX_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f"}
 ```
