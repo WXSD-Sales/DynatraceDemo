@@ -21,7 +21,6 @@
 
 ### Built With
 
-list out the technologies here
 - Python3 (v3.7.4)
 
 <!-- GETTING STARTED -->
