@@ -22,7 +22,7 @@
 ### Built With
 
 - Python3 (v3.7.4)
-- Tornado v4.5.2 (Python Web Framework)
+- Tornado (v4.5.2) (Python Web Framework)
 
 <!-- GETTING STARTED -->
 
