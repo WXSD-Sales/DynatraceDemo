@@ -19,7 +19,9 @@
 [![Dynatrace Video Demo](https://img.youtube.com/vi/s6VqLXaaACM/0.jpg)](https://youtu.be/s6VqLXaaACM, "Dynatrace Video Demo")
 
 
-### Built With
+## Setup
+
+### Prerequisites & Dependencies: 
 
 - Python3 (v3.7.4)
 - Tornado (v4.5.2) (Python Web Framework)
@@ -166,8 +168,12 @@
    ```
 
 ## License
+All contents are licensed under the MIT license. Please see [license](LICENSE) for details.
 
-Distributed under the MIT License. See `LICENSE` for more information.
+
+## Disclaimer
+<!-- Keep the following here -->  
+ Everything included is for demo and Proof of Concept purposes only. Use of the site is solely at your own risk. This site may contain links to third party content, which we do not warrant, endorse, or assume liability for. These demos are for Cisco Webex usecases, but are not Official Cisco Webex Branded demos.
 
 <!-- CONTACT -->
 
