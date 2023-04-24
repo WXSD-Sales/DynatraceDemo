@@ -49,7 +49,7 @@
 
 4. To run this, you can simply run:
    ```
-   python datadog_reply.py
+   python dynatrace_reply.py
    ```
 5. Using the bot's token, you can get the bot's personId here:
    https://developer.webex.com/docs/api/v1/people/get-my-own-details
